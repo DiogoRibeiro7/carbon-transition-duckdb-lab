@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+title: "Carbon Transition DuckDB Lab"
+message: "If you use this project, please cite it as below."
+type: software
+authors:
+  - family-names: Ribeiro
+    given-names: Diogo
+repository-code: "https://github.com/DiogoRibeiro7/carbon-transition-duckdb-lab"
+license: MIT
+version: 0.1.0
+date-released: 2026-05-01
