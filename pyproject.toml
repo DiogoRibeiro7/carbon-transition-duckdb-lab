@@ -11,7 +11,7 @@ license = "MIT"
 python = ">=3.10,<3.14"
 duckdb = "^1.5.2"
 pandas = "^2.2.3"
-typer = "^0.12.5"
+typer = ">=0.12.5,<1.0"
 rich = "^13.9.4"
 matplotlib = "^3.9.2"
 

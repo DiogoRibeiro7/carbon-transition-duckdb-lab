@@ -71,7 +71,10 @@ carbon-transition-duckdb-lab/
 │   ├── pipeline.py
 │   └── cli.py
 ├── notebooks/
-│   └── 01_duckdb_transition_workflow.ipynb
+│   ├── 01_duckdb_transition_workflow.ipynb
+│   ├── 02_score_anatomy_and_sensitivity.ipynb
+│   ├── 03_exploratory_analysis.ipynb
+│   └── 04_duckdb_sql_analytics.ipynb
 ├── tests/
 ├── reports/
 └── prompts/
@@ -157,6 +160,32 @@ FROM mart_transition_scores
 WHERE year = (SELECT MAX(year) FROM mart_transition_scores)
 ORDER BY transition_risk_score DESC
 LIMIT 20;
+```
+
+## Notebooks
+
+The `notebooks/` directory contains a runnable, output-embedded tour of the lab.
+Each notebook resolves the repository root automatically and builds the DuckDB
+lakehouse on demand, so they can be run in any order.
+
+| Notebook | What it covers |
+| --- | --- |
+| `01_duckdb_transition_workflow.ipynb` | End-to-end workflow: generate data → build DuckDB → inspect with SQL → score → visualize → report. |
+| `02_score_anatomy_and_sensitivity.ipynb` | Decomposes the score into weighted components and tests how robust the ranking is to different weight choices. |
+| `03_exploratory_analysis.ipynb` | Exploratory analysis of the country-year panel: trends, distributions, correlations, and energy-mix trajectories. |
+| `04_duckdb_sql_analytics.ipynb` | Pure-SQL analytics over the Parquet marts: window functions, CAGR, per-year rankings, and custom mart exports. |
+
+Run them from the project environment, for example:
+
+```bash
+poetry run jupyter lab notebooks/
+```
+
+To re-execute a notebook headlessly and embed fresh outputs:
+
+```bash
+poetry run jupyter nbconvert --to notebook --execute --inplace \
+  notebooks/01_duckdb_transition_workflow.ipynb
 ```
 
 ## Responsible use
