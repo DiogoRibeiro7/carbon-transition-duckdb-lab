@@ -14,3 +14,7 @@ reports/**/*.csv
 reports/**/*.png
 .DS_Store
 .env
+
+# Local-only agent docs (kept on disk, not tracked)
+AGENTS.md
+prompts/
