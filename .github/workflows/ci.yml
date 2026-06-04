@@ -24,5 +24,11 @@ jobs:
         run: poetry install --with dev
       - name: Run lint
         run: poetry run ruff check .
+      - name: Type check
+        run: poetry run mypy src
       - name: Run tests
         run: poetry run pytest
+      - name: Register Jupyter kernel
+        run: poetry run python -m ipykernel install --user --name ci-kernel
+      - name: Execute notebooks
+        run: poetry run pytest --nbmake notebooks --nbmake-kernel=ci-kernel

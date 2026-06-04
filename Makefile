@@ -1,4 +1,4 @@
-.PHONY: install test lint format sample build score report
+.PHONY: install test lint format notebooks sample build score report
 
 install:
 	poetry install --with dev
@@ -9,6 +9,9 @@ test:
 lint:
 	poetry run ruff check .
 	poetry run mypy src
+
+notebooks:
+	poetry run pytest --nbmake notebooks
 
 format:
 	poetry run ruff format .
