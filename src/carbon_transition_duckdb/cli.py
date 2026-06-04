@@ -22,7 +22,9 @@ console = Console()
 
 @app.command("sample-data")
 def sample_data(
-    output_dir: Path = typer.Option(Path("data/raw"), help="Directory for synthetic raw CSV files."),
+    output_dir: Path = typer.Option(
+        Path("data/raw"), help="Directory for synthetic raw CSV files."
+    ),
     start_year: int = typer.Option(2010, help="First generated year."),
     end_year: int = typer.Option(2024, help="Last generated year."),
     seed: int = typer.Option(42, help="Random seed."),

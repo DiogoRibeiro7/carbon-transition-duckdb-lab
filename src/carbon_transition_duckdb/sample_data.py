@@ -7,9 +7,9 @@ tests and examples do not depend on network access.
 
 from __future__ import annotations
 
+import random
 from dataclasses import dataclass
 from pathlib import Path
-import random
 
 import pandas as pd
 
@@ -115,7 +115,9 @@ def generate_synthetic_owid_data(
                     "primary_energy_consumption": round(primary_energy, 4),
                     "fossil_share_energy": round(fossil_share, 4),
                     "renewables_share_energy": round(renewable_share, 4),
-                    "renewables_share_elec": round(_bounded(renewable_share + rng.uniform(-3, 4), 0, 98), 4),
+                    "renewables_share_elec": round(
+                        _bounded(renewable_share + rng.uniform(-3, 4), 0, 98), 4
+                    ),
                     "electricity_generation": round(electricity_generation, 4),
                 }
             )

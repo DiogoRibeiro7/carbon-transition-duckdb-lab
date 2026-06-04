@@ -8,8 +8,16 @@ from pathlib import Path
 import pandas as pd
 
 from carbon_transition_duckdb.config import ProjectPaths
-from carbon_transition_duckdb.database.duckdb_engine import connect, execute_sql_file, table_to_frame
-from carbon_transition_duckdb.risk.scoring import add_driver_text, filter_entities, score_transition_risk
+from carbon_transition_duckdb.database.duckdb_engine import (
+    connect,
+    execute_sql_file,
+    table_to_frame,
+)
+from carbon_transition_duckdb.risk.scoring import (
+    add_driver_text,
+    filter_entities,
+    score_transition_risk,
+)
 
 
 @dataclass(frozen=True)
@@ -62,7 +70,11 @@ def build_duckdb_lakehouse(paths: ProjectPaths) -> BuildResult:
             sql_dir / "02_export_marts.sql",
             {"export_dir": str(paths.export_dir)},
         )
-        row_count = int(connection.execute("SELECT COUNT(*) FROM mart_country_year_transition").fetchone()[0])
+        row_count = int(
+            connection.execute(
+                "SELECT COUNT(*) FROM mart_country_year_transition"
+            ).fetchone()[0]
+        )
 
     return BuildResult(
         database=paths.database,

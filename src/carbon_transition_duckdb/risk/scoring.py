@@ -6,8 +6,9 @@ interpretability, auditing, and exploratory analysis, not for causal inference.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
+from typing import cast
 
 import pandas as pd
 
@@ -86,7 +87,7 @@ def add_recent_trend(
         .transform(lambda values: values - values.shift(periods))
         .fillna(0.0)
     )
-    return output
+    return cast(pd.DataFrame, output)
 
 
 def score_transition_risk(
@@ -127,8 +128,12 @@ def score_transition_risk(
     scored["co2_trend_score"] = minmax_score(scored["co2_recent_trend"], higher_is_risk=True)
     scored["co2_per_capita_score"] = minmax_score(scored["co2_per_capita"], higher_is_risk=True)
     scored["carbon_intensity_score"] = minmax_score(scored["carbon_intensity"], higher_is_risk=True)
-    scored["fossil_share_score"] = minmax_score(scored["fossil_share_energy"], higher_is_risk=True)
-    scored["renewable_gap_score"] = minmax_score(scored["renewables_share_elec"], higher_is_risk=False)
+    scored["fossil_share_score"] = minmax_score(
+        scored["fossil_share_energy"], higher_is_risk=True
+    )
+    scored["renewable_gap_score"] = minmax_score(
+        scored["renewables_share_elec"], higher_is_risk=False
+    )
 
     component_cols = [
         "co2_trend_score",
@@ -175,7 +180,7 @@ def add_driver_text(frame: pd.DataFrame, max_drivers: int = 3) -> pd.DataFrame:
         "; ".join(top_risk_drivers(row, max_drivers=max_drivers))
         for _, row in output.iterrows()
     ]
-    return output
+    return cast(pd.DataFrame, output)
 
 
 def latest_year(frame: pd.DataFrame, year_col: str = "year") -> int:
@@ -188,14 +193,19 @@ def latest_year(frame: pd.DataFrame, year_col: str = "year") -> int:
     return int(years.max())
 
 
-def filter_entities(frame: pd.DataFrame, excluded_entities: Iterable[str] | None = None) -> pd.DataFrame:
+def filter_entities(
+    frame: pd.DataFrame, excluded_entities: Iterable[str] | None = None
+) -> pd.DataFrame:
     """Remove aggregate entities if present.
 
     OWID files include aggregate rows such as World, Europe, and Asia. This
     helper is intentionally configurable because some analyses may want to
     keep those aggregates.
     """
-    excluded = set(excluded_entities or {"World", "Europe", "Asia", "Africa", "North America", "South America"})
+    excluded = set(
+        excluded_entities
+        or {"World", "Europe", "Asia", "Africa", "North America", "South America"}
+    )
     if "country" not in frame.columns:
         raise ValueError("Column 'country' is required.")
-    return frame.loc[~frame["country"].isin(excluded)].copy()
+    return cast(pd.DataFrame, frame.loc[~frame["country"].isin(excluded)].copy())
