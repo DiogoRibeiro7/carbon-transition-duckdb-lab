@@ -52,7 +52,6 @@ Markdown report + notebook
 carbon-transition-duckdb-lab/
 ├── README.md
 ├── ROADMAP.md
-├── AGENTS.md
 ├── CITATION.cff
 ├── pyproject.toml
 ├── Makefile
@@ -76,8 +75,7 @@ carbon-transition-duckdb-lab/
 │   ├── 03_exploratory_analysis.ipynb
 │   └── 04_duckdb_sql_analytics.ipynb
 ├── tests/
-├── reports/
-└── prompts/
+└── reports/
 ```
 
 ## Install
