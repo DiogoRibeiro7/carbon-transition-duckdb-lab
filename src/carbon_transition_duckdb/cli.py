@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
 import pandas as pd
 import typer
@@ -11,6 +12,11 @@ from rich.table import Table
 
 from carbon_transition_duckdb.config import ProjectPaths
 from carbon_transition_duckdb.database.duckdb_engine import connect
+from carbon_transition_duckdb.decomposition import (
+    intensity_decomposition_frame,
+    kaya_decomposition_frame,
+    transition_indicators,
+)
 from carbon_transition_duckdb.ingestion.download import download_owid_datasets
 from carbon_transition_duckdb.pipeline import (
     build_duckdb_lakehouse,
@@ -24,6 +30,7 @@ from carbon_transition_duckdb.quality.missingness import (
 )
 from carbon_transition_duckdb.quality.schema import validate_connection_schemas
 from carbon_transition_duckdb.reporting.markdown import write_report
+from carbon_transition_duckdb.risk.scoring import filter_entities
 from carbon_transition_duckdb.sample_data import generate_synthetic_owid_data
 from carbon_transition_duckdb.visualization.plots import plot_top_scores
 
@@ -210,3 +217,58 @@ def manifest(
         energy = raw_dir / "owid-energy-data.csv"
         path = write_manifest([co2, energy], output)
         console.print(f"[green]Wrote manifest:[/] {path}")
+
+
+def _print_frame(frame: pd.DataFrame, title: str) -> None:
+    """Render a DataFrame as a Rich table."""
+    table = Table(title=title)
+    for column in frame.columns:
+        justify: Literal["left", "right"] = "left" if column == "country" else "right"
+        table.add_column(str(column), justify=justify)
+    for _, row in frame.iterrows():
+        table.add_row(*[str(value) for value in row.tolist()])
+    console.print(table)
+
+
+@app.command("decompose")
+def decompose(
+    database: Path = typer.Option(
+        Path("data/processed/carbon_transition.duckdb"),
+        help="Path to DuckDB database.",
+    ),
+    method: str = typer.Option(
+        "kaya", help="Decomposition: 'kaya', 'intensity', or 'indicators'."
+    ),
+    start_year: int | None = typer.Option(
+        None, help="Start year (defaults to the earliest available)."
+    ),
+    end_year: int | None = typer.Option(
+        None, help="End year (defaults to the latest available)."
+    ),
+    output: Path | None = typer.Option(None, help="Optional CSV output path."),
+    include_aggregates: bool = typer.Option(
+        False, help="Include aggregate entities such as World or Europe."
+    ),
+) -> None:
+    """Decompose emissions change (Kaya / intensity) or compute indicators."""
+    mart = load_transition_mart(database)
+    if not include_aggregates:
+        mart = filter_entities(mart)
+
+    builders = {
+        "kaya": (kaya_decomposition_frame, "Kaya identity decomposition"),
+        "intensity": (intensity_decomposition_frame, "CO2-per-capita decomposition"),
+        "indicators": (transition_indicators, "Transition indicators"),
+    }
+    if method not in builders:
+        raise typer.BadParameter("method must be 'kaya', 'intensity', or 'indicators'.")
+
+    builder, title = builders[method]
+    frame = builder(mart, start_year, end_year)
+
+    _print_frame(frame, title)
+
+    if output is not None:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        frame.to_csv(output, index=False)
+        console.print(f"[green]Wrote:[/] {output}")

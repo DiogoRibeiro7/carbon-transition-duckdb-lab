@@ -65,6 +65,7 @@ carbon-transition-duckdb-lab/
 │   ├── database/
 │   ├── risk/
 │   ├── quality/
+│   ├── decomposition/
 │   ├── reporting/
 │   ├── visualization/
 │   ├── sample_data.py
@@ -75,7 +76,8 @@ carbon-transition-duckdb-lab/
 │   ├── 02_score_anatomy_and_sensitivity.ipynb
 │   ├── 03_exploratory_analysis.ipynb
 │   ├── 04_duckdb_sql_analytics.ipynb
-│   └── 05_data_quality.ipynb
+│   ├── 05_data_quality.ipynb
+│   └── 06_decomposition_attribution.ipynb
 ├── tests/
 └── reports/
 ```
@@ -150,6 +152,24 @@ poetry run carbon-duckdb manifest --verify
 See [docs/data_quality.md](docs/data_quality.md) for the full toolkit
 (schema validation, missingness, normalization, country groups, manifests).
 
+## Decomposition & attribution (v0.3)
+
+Explain *why* emissions changed with an exact Kaya identity (LMDI) decomposition,
+a CO2-per-capita decomposition, and transition indicators:
+
+```bash
+# Kaya decomposition of CO2 change (population / energy / carbon intensity)
+poetry run carbon-duckdb decompose --method kaya
+
+# CO2-per-capita decomposition over a custom window
+poetry run carbon-duckdb decompose --method intensity --start-year 2015 --end-year 2024
+
+# Electricity-mix, fossil lock-in and industrial-proxy indicators
+poetry run carbon-duckdb decompose --method indicators --output reports/sample_run/indicators.csv
+```
+
+See [docs/decomposition.md](docs/decomposition.md) for the method details.
+
 ## Main metrics
 
 The first version computes a transparent score from:
@@ -194,6 +214,7 @@ lakehouse on demand, so they can be run in any order.
 | `03_exploratory_analysis.ipynb` | Exploratory analysis of the country-year panel: trends, distributions, correlations, and energy-mix trajectories. |
 | `04_duckdb_sql_analytics.ipynb` | Pure-SQL analytics over the Parquet marts: window functions, CAGR, per-year rankings, and custom mart exports. |
 | `05_data_quality.ipynb` | Data-quality toolkit (v0.2): schema-drift validation, ingestion metadata, checksum manifests, missingness reports, country normalization, and group filters. |
+| `06_decomposition_attribution.ipynb` | Decomposition & attribution (v0.3): Kaya identity (LMDI), emissions-intensity decomposition, and fossil lock-in / electricity-mix indicators. |
 
 Run them from the project environment, for example:
 

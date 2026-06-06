@@ -24,11 +24,11 @@
 
 ## v0.3 — Decomposition and attribution
 
-- [ ] Kaya identity decomposition
-- [ ] Emissions intensity decomposition
-- [ ] Electricity mix transition indicators
-- [ ] Fossil lock-in indicators
-- [ ] Industrial emissions proxy indicators
+- [x] Kaya identity decomposition
+- [x] Emissions intensity decomposition
+- [x] Electricity mix transition indicators
+- [x] Fossil lock-in indicators
+- [x] Industrial emissions proxy indicators
 
 ## v0.4 — Forecasting and scenarios
 
