@@ -15,12 +15,12 @@
 
 ## v0.2 — Data quality and validation
 
-- [ ] Add schema validation for OWID column drift
-- [ ] Add missingness reports by country and metric
-- [ ] Add country/entity normalization
-- [ ] Add country group filters: World, EU, OECD, income groups
-- [ ] Add row-level ingestion metadata
-- [ ] Add reproducible data manifests with checksums
+- [x] Add schema validation for OWID column drift
+- [x] Add missingness reports by country and metric
+- [x] Add country/entity normalization
+- [x] Add country group filters: World, EU, OECD, income groups
+- [x] Add row-level ingestion metadata
+- [x] Add reproducible data manifests with checksums
 
 ## v0.3 — Decomposition and attribution
 

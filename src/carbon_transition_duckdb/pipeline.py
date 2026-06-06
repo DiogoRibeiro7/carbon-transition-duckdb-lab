@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -12,6 +13,11 @@ from carbon_transition_duckdb.database.duckdb_engine import (
     connect,
     execute_sql_file,
     table_to_frame,
+)
+from carbon_transition_duckdb.quality.manifest import write_manifest
+from carbon_transition_duckdb.quality.schema import (
+    assert_no_drift,
+    validate_connection_schemas,
 )
 from carbon_transition_duckdb.risk.scoring import (
     add_driver_text,
@@ -28,15 +34,35 @@ class BuildResult:
     export_dir: Path
     mart_table: str
     row_count: int
+    ingested_at: str
+    manifest_path: Path
 
 
-def build_duckdb_lakehouse(paths: ProjectPaths) -> BuildResult:
+def _resolve_sql_dir() -> Path:
+    """Locate the repository SQL directory for both source and installed runs."""
+    sql_dir = Path(__file__).resolve().parents[2] / "sql"
+    if not sql_dir.exists():
+        # When installed as a package, SQL files may live next to the cwd.
+        sql_dir = Path.cwd() / "sql"
+    return sql_dir
+
+
+def build_duckdb_lakehouse(
+    paths: ProjectPaths, ingested_at: str | None = None
+) -> BuildResult:
     """Build the DuckDB database, analytical mart, and Parquet exports.
+
+    The build also stamps each raw row with ingestion metadata, validates the
+    raw schemas against the columns the mart depends on, and writes a checksum
+    manifest of the raw inputs.
 
     Parameters
     ----------
     paths:
         Local raw, database, and export paths.
+    ingested_at:
+        Optional ingestion timestamp (``YYYY-MM-DD HH:MM:SS``). Defaults to the
+        current UTC time; pass an explicit value for reproducible builds.
 
     Returns
     -------
@@ -50,10 +76,8 @@ def build_duckdb_lakehouse(paths: ProjectPaths) -> BuildResult:
     if not paths.energy_csv.exists():
         raise FileNotFoundError(f"Missing energy CSV file: {paths.energy_csv}")
 
-    sql_dir = Path(__file__).resolve().parents[2] / "sql"
-    if not sql_dir.exists():
-        # When installed as a package, SQL files may live next to the project root.
-        sql_dir = Path.cwd() / "sql"
+    stamp = ingested_at or datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    sql_dir = _resolve_sql_dir()
 
     with connect(paths.database) as connection:
         execute_sql_file(
@@ -62,8 +86,12 @@ def build_duckdb_lakehouse(paths: ProjectPaths) -> BuildResult:
             {
                 "co2_csv": str(paths.co2_csv),
                 "energy_csv": str(paths.energy_csv),
+                "co2_source": paths.co2_csv.name,
+                "energy_source": paths.energy_csv.name,
+                "ingested_at": stamp,
             },
         )
+        assert_no_drift(validate_connection_schemas(connection))
         execute_sql_file(connection, sql_dir / "01_build_marts.sql")
         execute_sql_file(
             connection,
@@ -76,11 +104,18 @@ def build_duckdb_lakehouse(paths: ProjectPaths) -> BuildResult:
             ).fetchone()[0]
         )
 
+    manifest_path = write_manifest(
+        [paths.co2_csv, paths.energy_csv],
+        paths.database.parent / "data_manifest.json",
+    )
+
     return BuildResult(
         database=paths.database,
         export_dir=paths.export_dir,
         mart_table="mart_country_year_transition",
         row_count=row_count,
+        ingested_at=stamp,
+        manifest_path=manifest_path,
     )
 
 
@@ -90,7 +125,9 @@ def load_transition_mart(database: Path) -> pd.DataFrame:
     return table_to_frame(database, query)
 
 
-def compute_transition_scores(database: Path, exclude_aggregates: bool = True) -> pd.DataFrame:
+def compute_transition_scores(
+    database: Path, exclude_aggregates: bool = True
+) -> pd.DataFrame:
     """Compute transition-risk scores from the DuckDB mart."""
     mart = load_transition_mart(database)
     if exclude_aggregates:

@@ -64,6 +64,7 @@ carbon-transition-duckdb-lab/
 │   ├── ingestion/
 │   ├── database/
 │   ├── risk/
+│   ├── quality/
 │   ├── reporting/
 │   ├── visualization/
 │   ├── sample_data.py
@@ -73,7 +74,8 @@ carbon-transition-duckdb-lab/
 │   ├── 01_duckdb_transition_workflow.ipynb
 │   ├── 02_score_anatomy_and_sensitivity.ipynb
 │   ├── 03_exploratory_analysis.ipynb
-│   └── 04_duckdb_sql_analytics.ipynb
+│   ├── 04_duckdb_sql_analytics.ipynb
+│   └── 05_data_quality.ipynb
 ├── tests/
 └── reports/
 ```
@@ -129,6 +131,25 @@ poetry run carbon-duckdb download-owid --output-dir data/raw
 
 Then run the same `build`, `score`, and `report` commands.
 
+## Data quality (v0.2)
+
+The `build` step now stamps raw rows with ingestion metadata, validates the raw
+schemas against the columns the mart needs, and writes a checksum manifest.
+Two commands expose the data-quality layer directly:
+
+```bash
+# Validate raw schemas + report completeness (writes an optional Markdown report)
+poetry run carbon-duckdb validate \
+  --database data/processed/carbon_transition.duckdb \
+  --report reports/sample_run/completeness.md
+
+# Verify the raw files still match the recorded manifest
+poetry run carbon-duckdb manifest --verify
+```
+
+See [docs/data_quality.md](docs/data_quality.md) for the full toolkit
+(schema validation, missingness, normalization, country groups, manifests).
+
 ## Main metrics
 
 The first version computes a transparent score from:
@@ -172,6 +193,7 @@ lakehouse on demand, so they can be run in any order.
 | `02_score_anatomy_and_sensitivity.ipynb` | Decomposes the score into weighted components and tests how robust the ranking is to different weight choices. |
 | `03_exploratory_analysis.ipynb` | Exploratory analysis of the country-year panel: trends, distributions, correlations, and energy-mix trajectories. |
 | `04_duckdb_sql_analytics.ipynb` | Pure-SQL analytics over the Parquet marts: window functions, CAGR, per-year rankings, and custom mart exports. |
+| `05_data_quality.ipynb` | Data-quality toolkit (v0.2): schema-drift validation, ingestion metadata, checksum manifests, missingness reports, country normalization, and group filters. |
 
 Run them from the project environment, for example:
 

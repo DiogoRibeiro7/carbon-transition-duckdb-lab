@@ -10,8 +10,19 @@ from rich.console import Console
 from rich.table import Table
 
 from carbon_transition_duckdb.config import ProjectPaths
+from carbon_transition_duckdb.database.duckdb_engine import connect
 from carbon_transition_duckdb.ingestion.download import download_owid_datasets
-from carbon_transition_duckdb.pipeline import build_duckdb_lakehouse, compute_transition_scores
+from carbon_transition_duckdb.pipeline import (
+    build_duckdb_lakehouse,
+    compute_transition_scores,
+    load_transition_mart,
+)
+from carbon_transition_duckdb.quality.manifest import verify_manifest, write_manifest
+from carbon_transition_duckdb.quality.missingness import (
+    missingness_by_metric,
+    write_missingness_report,
+)
+from carbon_transition_duckdb.quality.schema import validate_connection_schemas
 from carbon_transition_duckdb.reporting.markdown import write_report
 from carbon_transition_duckdb.sample_data import generate_synthetic_owid_data
 from carbon_transition_duckdb.visualization.plots import plot_top_scores
@@ -76,6 +87,8 @@ def build(
     console.print(f"[green]Export dir:[/] {result.export_dir}")
     console.print(f"[green]Mart table:[/] {result.mart_table}")
     console.print(f"[green]Rows:[/] {result.row_count}")
+    console.print(f"[green]Ingested at:[/] {result.ingested_at}")
+    console.print(f"[green]Manifest:[/] {result.manifest_path}")
 
 
 @app.command("score")
@@ -122,3 +135,78 @@ def report(
     if chart is not None:
         plot_top_scores(frame, output_path=chart, top_n=top_n)
         console.print(f"[green]Wrote chart:[/] {chart}")
+
+
+@app.command("validate")
+def validate(
+    database: Path = typer.Option(
+        Path("data/processed/carbon_transition.duckdb"),
+        help="Path to DuckDB database.",
+    ),
+    report: Path | None = typer.Option(
+        None, help="Optional Markdown completeness report output path."
+    ),
+) -> None:
+    """Validate raw schemas and report data completeness."""
+    with connect(database) as connection:
+        reports = validate_connection_schemas(connection)
+
+    schema_table = Table(title="Schema validation")
+    schema_table.add_column("Table")
+    schema_table.add_column("Status")
+    schema_table.add_column("Missing columns")
+    drift = False
+    for item in reports:
+        status = "[green]OK[/]" if item.is_valid else "[red]DRIFT[/]"
+        drift = drift or not item.is_valid
+        schema_table.add_row(item.table, status, ", ".join(item.missing) or "-")
+    console.print(schema_table)
+
+    mart = load_transition_mart(database)
+    by_metric = missingness_by_metric(mart)
+    metric_table = Table(title="Missingness by metric")
+    metric_table.add_column("Metric")
+    metric_table.add_column("% missing", justify="right")
+    for _, row in by_metric.iterrows():
+        metric_table.add_row(str(row["metric"]), f"{row['pct_missing']:.2f}")
+    console.print(metric_table)
+
+    if report is not None:
+        write_missingness_report(mart, report)
+        console.print(f"[green]Wrote report:[/] {report}")
+
+    if drift:
+        raise typer.Exit(code=1)
+
+
+@app.command("manifest")
+def manifest(
+    raw_dir: Path = typer.Option(
+        Path("data/raw"), help="Directory containing raw OWID CSV files."
+    ),
+    output: Path = typer.Option(
+        Path("data/processed/data_manifest.json"),
+        help="Manifest JSON path.",
+    ),
+    verify: bool = typer.Option(
+        False, help="Verify files against an existing manifest instead of writing one."
+    ),
+) -> None:
+    """Build or verify a checksum manifest of the raw data files."""
+    if verify:
+        results = verify_manifest(output, raw_dir)
+        table = Table(title="Manifest verification")
+        table.add_column("File")
+        table.add_column("Matches")
+        ok = True
+        for name, matches in results.items():
+            ok = ok and matches
+            table.add_row(name, "[green]yes[/]" if matches else "[red]NO[/]")
+        console.print(table)
+        if not ok:
+            raise typer.Exit(code=1)
+    else:
+        co2 = raw_dir / "owid-co2-data.csv"
+        energy = raw_dir / "owid-energy-data.csv"
+        path = write_manifest([co2, energy], output)
+        console.print(f"[green]Wrote manifest:[/] {path}")
