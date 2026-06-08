@@ -17,6 +17,11 @@ from carbon_transition_duckdb.decomposition import (
     kaya_decomposition_frame,
     transition_indicators,
 )
+from carbon_transition_duckdb.forecasting import (
+    ReductionTarget,
+    forecast_frame,
+    target_gap_frame,
+)
 from carbon_transition_duckdb.ingestion.download import download_owid_datasets
 from carbon_transition_duckdb.pipeline import (
     build_duckdb_lakehouse,
@@ -267,6 +272,71 @@ def decompose(
     frame = builder(mart, start_year, end_year)
 
     _print_frame(frame, title)
+
+    if output is not None:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        frame.to_csv(output, index=False)
+        console.print(f"[green]Wrote:[/] {output}")
+
+
+@app.command("forecast")
+def forecast(
+    database: Path = typer.Option(
+        Path("data/processed/carbon_transition.duckdb"),
+        help="Path to DuckDB database.",
+    ),
+    metric: str = typer.Option("co2", help="Metric column to forecast."),
+    horizon: int = typer.Option(5, help="Years to project past the last observed year."),
+    output: Path | None = typer.Option(None, help="Optional CSV output path."),
+    include_aggregates: bool = typer.Option(
+        False, help="Include aggregate entities such as World or Europe."
+    ),
+) -> None:
+    """Baseline OLS trend forecast with approximate prediction intervals."""
+    mart = load_transition_mart(database)
+    if not include_aggregates:
+        mart = filter_entities(mart)
+
+    frame = forecast_frame(mart, metric, horizon)
+    _print_frame(frame, f"{metric} forecast (+{horizon}y, ~95% interval)")
+
+    if output is not None:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        frame.to_csv(output, index=False)
+        console.print(f"[green]Wrote:[/] {output}")
+
+
+@app.command("target-gap")
+def target_gap_command(
+    database: Path = typer.Option(
+        Path("data/processed/carbon_transition.duckdb"),
+        help="Path to DuckDB database.",
+    ),
+    metric: str = typer.Option("co2", help="Metric the target applies to."),
+    base_year: int = typer.Option(2010, help="Baseline year for the reduction."),
+    target_year: int = typer.Option(2030, help="Year the target should be met."),
+    reduction: float = typer.Option(
+        0.55, help="Reduction fraction vs. base year (0.55 = -55%)."
+    ),
+    output: Path | None = typer.Option(None, help="Optional CSV output path."),
+    include_aggregates: bool = typer.Option(
+        False, help="Include aggregate entities such as World or Europe."
+    ),
+) -> None:
+    """Gap between a trend projection and a proportional reduction target."""
+    mart = load_transition_mart(database)
+    if not include_aggregates:
+        mart = filter_entities(mart)
+
+    target = ReductionTarget(
+        metric=metric,
+        base_year=base_year,
+        target_year=target_year,
+        reduction=reduction,
+    )
+    frame = target_gap_frame(mart, target)
+    pct = int(round(reduction * 100))
+    _print_frame(frame, f"{metric} gap to -{pct}% by {target_year} (base {base_year})")
 
     if output is not None:
         output.parent.mkdir(parents=True, exist_ok=True)

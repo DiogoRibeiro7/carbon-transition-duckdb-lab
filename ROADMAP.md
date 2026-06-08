@@ -32,10 +32,10 @@
 
 ## v0.4 — Forecasting and scenarios
 
-- [ ] Baseline trend forecasts
-- [ ] Uncertainty intervals
-- [ ] Scenario comparison tables
-- [ ] Policy target gap analysis
+- [x] Baseline trend forecasts
+- [x] Uncertainty intervals
+- [x] Scenario comparison tables
+- [x] Policy target gap analysis
 
 ## v0.5 — Production-style local analytics
 

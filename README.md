@@ -66,6 +66,7 @@ carbon-transition-duckdb-lab/
 │   ├── risk/
 │   ├── quality/
 │   ├── decomposition/
+│   ├── forecasting/
 │   ├── reporting/
 │   ├── visualization/
 │   ├── sample_data.py
@@ -77,7 +78,8 @@ carbon-transition-duckdb-lab/
 │   ├── 03_exploratory_analysis.ipynb
 │   ├── 04_duckdb_sql_analytics.ipynb
 │   ├── 05_data_quality.ipynb
-│   └── 06_decomposition_attribution.ipynb
+│   ├── 06_decomposition_attribution.ipynb
+│   └── 07_forecasting_scenarios.ipynb
 ├── tests/
 └── reports/
 ```
@@ -170,6 +172,21 @@ poetry run carbon-duckdb decompose --method indicators --output reports/sample_r
 
 See [docs/decomposition.md](docs/decomposition.md) for the method details.
 
+## Forecasting & scenarios (v0.4)
+
+Transparent baseline projections that assume the recent trend continues:
+
+```bash
+# OLS trend forecast with ~95% prediction intervals
+poetry run carbon-duckdb forecast --metric co2 --horizon 6
+
+# Gap to a 30%-by-2030 reduction target (vs. a 2010 base year)
+poetry run carbon-duckdb target-gap --metric co2 --base-year 2010 --target-year 2030 --reduction 0.30
+```
+
+Scenario comparison tables and the full method (intervals, CAGR scenarios,
+target gaps) are documented in [docs/forecasting.md](docs/forecasting.md).
+
 ## Main metrics
 
 The first version computes a transparent score from:
@@ -215,6 +232,7 @@ lakehouse on demand, so they can be run in any order.
 | `04_duckdb_sql_analytics.ipynb` | Pure-SQL analytics over the Parquet marts: window functions, CAGR, per-year rankings, and custom mart exports. |
 | `05_data_quality.ipynb` | Data-quality toolkit (v0.2): schema-drift validation, ingestion metadata, checksum manifests, missingness reports, country normalization, and group filters. |
 | `06_decomposition_attribution.ipynb` | Decomposition & attribution (v0.3): Kaya identity (LMDI), emissions-intensity decomposition, and fossil lock-in / electricity-mix indicators. |
+| `07_forecasting_scenarios.ipynb` | Forecasting & scenarios (v0.4): OLS trend forecasts with prediction intervals, constant-rate scenario comparison, and policy target-gap analysis. |
 
 Run them from the project environment, for example:
 
