@@ -1,4 +1,5 @@
 from pathlib import Path
+
 import pandas as pd
 
 mart_path = Path('data/processed/marts/mart_country_year_transition.csv')
