@@ -1,0 +1,21 @@
+name: carbon_transition
+version: "0.5.0"
+config-version: 2
+
+profile: carbon_transition
+
+model-paths: ["models"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages", "logs"]
+
+# Paths are resolved relative to the directory dbt is invoked from (the repo
+# root), so the dbt models read the same raw CSVs the Python pipeline uses.
+vars:
+  raw_dir: "data/raw"
+
+models:
+  carbon_transition:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table

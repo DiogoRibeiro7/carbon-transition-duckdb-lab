@@ -39,7 +39,7 @@
 
 ## v0.5 — Production-style local analytics
 
-- [ ] dbt-duckdb integration
-- [ ] Evidence.dev or Quarto dashboard
-- [ ] Scheduled GitHub Actions data refresh
-- [ ] Release packaged DuckDB snapshots
+- [x] dbt-duckdb integration
+- [x] Evidence.dev or Quarto dashboard
+- [x] Scheduled GitHub Actions data refresh
+- [x] Release packaged DuckDB snapshots

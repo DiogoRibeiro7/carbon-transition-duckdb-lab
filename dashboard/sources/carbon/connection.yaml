@@ -1,0 +1,7 @@
+name: carbon
+type: duckdb
+options:
+  # The DuckDB database built by the Python pipeline / dbt. The path is resolved
+  # relative to this source directory (dashboard/sources/carbon/), so three
+  # levels up reaches the repo root. Run `carbon-duckdb build` first.
+  filename: ../../../data/processed/carbon_transition.duckdb

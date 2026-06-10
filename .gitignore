@@ -16,6 +16,12 @@ reports/**/*.png
 .DS_Store
 .env
 
+# Build/snapshot artifacts and dbt run output
+dist/
+transform/target/
+transform/logs/
+transform/dbt_packages/
+
 # Local-only agent docs (kept on disk, not tracked)
 AGENTS.md
 prompts/

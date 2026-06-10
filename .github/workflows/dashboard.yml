@@ -1,0 +1,50 @@
+name: Dashboard
+
+# Builds the Evidence.dev dashboard against a freshly built sample lakehouse.
+# Kept in its own workflow so the heavy Node build never gates the Python CI.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "dashboard/**"
+      - "src/**"
+      - "sql/**"
+      - ".github/workflows/dashboard.yml"
+  pull_request:
+    paths:
+      - "dashboard/**"
+      - "src/**"
+      - "sql/**"
+      - ".github/workflows/dashboard.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v3
+      - name: Install Python dependencies
+        run: poetry install --with dev
+      - name: Build sample lakehouse
+        run: |
+          poetry run carbon-duckdb sample-data --output-dir data/raw
+          poetry run carbon-duckdb build
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: dashboard/package-lock.json
+      - name: Install dashboard dependencies
+        run: npm ci
+        working-directory: dashboard
+      - name: Build Evidence dashboard
+        run: |
+          npm run sources
+          npm run build
+        working-directory: dashboard

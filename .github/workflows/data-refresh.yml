@@ -1,0 +1,43 @@
+name: Data refresh
+
+# Downloads the live OWID datasets, rebuilds the lakehouse, and publishes the
+# snapshot + reports as workflow artifacts. Nothing is committed or released.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1" # weekly, Mondays at 06:00 UTC
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v3
+      - name: Install dependencies
+        run: poetry install --with dev
+      - name: Download OWID data
+        run: poetry run carbon-duckdb download-owid --output-dir data/raw --overwrite
+      - name: Build lakehouse (validates schema + writes manifest)
+        run: poetry run carbon-duckdb build
+      - name: Validate completeness
+        run: poetry run carbon-duckdb validate --report reports/sample_run/completeness.md
+      - name: Score and report
+        run: |
+          poetry run carbon-duckdb score
+          poetry run carbon-duckdb report --chart reports/sample_run/top_scores.png
+      - name: Package snapshot
+        run: poetry run carbon-duckdb snapshot
+      - name: Upload snapshot and reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: carbon-transition-snapshot
+          path: |
+            dist/*.zip
+            reports/sample_run/*
+          retention-days: 30
+          if-no-files-found: error

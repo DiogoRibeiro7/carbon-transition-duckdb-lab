@@ -67,11 +67,14 @@ carbon-transition-duckdb-lab/
 │   ├── quality/
 │   ├── decomposition/
 │   ├── forecasting/
+│   ├── packaging/
 │   ├── reporting/
 │   ├── visualization/
 │   ├── sample_data.py
 │   ├── pipeline.py
 │   └── cli.py
+├── transform/            # dbt-duckdb project (staging + marts)
+├── dashboard/            # Evidence.dev BI dashboard
 ├── notebooks/
 │   ├── 01_duckdb_transition_workflow.ipynb
 │   ├── 02_score_anatomy_and_sensitivity.ipynb
@@ -186,6 +189,33 @@ poetry run carbon-duckdb target-gap --metric co2 --base-year 2010 --target-year 
 
 Scenario comparison tables and the full method (intervals, CAGR scenarios,
 target gaps) are documented in [docs/forecasting.md](docs/forecasting.md).
+
+## Production-style local analytics (v0.5)
+
+- **dbt-duckdb** (`transform/`) rebuilds the marts as tested dbt models:
+
+  ```bash
+  poetry run carbon-duckdb sample-data --output-dir data/raw
+  poetry run dbt build --project-dir transform --profiles-dir transform
+  ```
+
+- **Evidence.dev dashboard** (`dashboard/`) renders the marts as a BI site:
+
+  ```bash
+  poetry run carbon-duckdb build
+  cd dashboard && npm ci && npm run sources && npm run dev
+  ```
+
+- **Release snapshot** bundles the database, marts, and manifest into a zip:
+
+  ```bash
+  poetry run carbon-duckdb snapshot   # -> dist/carbon_transition_snapshot_v0.5.0.zip
+  ```
+
+- **Scheduled refresh** (`.github/workflows/data-refresh.yml`) downloads live
+  OWID data weekly and uploads a fresh snapshot + reports as artifacts.
+
+Full details in [docs/production.md](docs/production.md).
 
 ## Main metrics
 

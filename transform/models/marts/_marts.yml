@@ -1,0 +1,19 @@
+version: 2
+
+models:
+  - name: mart_country_year_transition
+    description: Country-year transition mart used by scoring and analytics.
+    columns:
+      - name: country
+        tests: [not_null]
+      - name: year
+        tests: [not_null]
+      - name: co2
+        description: Annual CO2 emissions (million tonnes).
+  - name: mart_latest_country_transition
+    description: Most recent year of the country-year transition mart.
+    columns:
+      - name: country
+        tests: [not_null]
+      - name: year
+        tests: [not_null]

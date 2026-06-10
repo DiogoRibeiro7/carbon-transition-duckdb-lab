@@ -1,4 +1,4 @@
-.PHONY: install test lint format notebooks sample build score report
+.PHONY: install test lint format notebooks sample build score report dbt snapshot dashboard
 
 install:
 	poetry install --with dev
@@ -28,3 +28,12 @@ score:
 
 report:
 	poetry run carbon-duckdb report --scores reports/sample_run/transition_scores.csv --output reports/sample_run/transition_report.md
+
+dbt:
+	poetry run dbt build --project-dir transform --profiles-dir transform
+
+snapshot:
+	poetry run carbon-duckdb snapshot
+
+dashboard:
+	cd dashboard && npm ci && npm run sources && npm run build

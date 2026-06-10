@@ -23,6 +23,7 @@ from carbon_transition_duckdb.forecasting import (
     target_gap_frame,
 )
 from carbon_transition_duckdb.ingestion.download import download_owid_datasets
+from carbon_transition_duckdb.packaging import build_snapshot, default_snapshot_path
 from carbon_transition_duckdb.pipeline import (
     build_duckdb_lakehouse,
     compute_transition_scores,
@@ -37,6 +38,7 @@ from carbon_transition_duckdb.quality.schema import validate_connection_schemas
 from carbon_transition_duckdb.reporting.markdown import write_report
 from carbon_transition_duckdb.risk.scoring import filter_entities
 from carbon_transition_duckdb.sample_data import generate_synthetic_owid_data
+from carbon_transition_duckdb.version import __version__
 from carbon_transition_duckdb.visualization.plots import plot_top_scores
 
 app = typer.Typer(help="Local DuckDB lakehouse for carbon-transition analytics.")
@@ -342,3 +344,35 @@ def target_gap_command(
         output.parent.mkdir(parents=True, exist_ok=True)
         frame.to_csv(output, index=False)
         console.print(f"[green]Wrote:[/] {output}")
+
+
+@app.command("snapshot")
+def snapshot(
+    database: Path = typer.Option(
+        Path("data/processed/carbon_transition.duckdb"),
+        help="Path to DuckDB database.",
+    ),
+    marts_dir: Path = typer.Option(
+        Path("data/processed/marts"), help="Directory of Parquet marts."
+    ),
+    manifest: Path = typer.Option(
+        Path("data/processed/data_manifest.json"), help="Data manifest JSON."
+    ),
+    output_dir: Path = typer.Option(Path("dist"), help="Directory for the snapshot."),
+    version: str | None = typer.Option(
+        None, help="Snapshot version label (defaults to the package version)."
+    ),
+) -> None:
+    """Package the database, marts, and manifest into a versioned snapshot zip."""
+    label = version or __version__
+    result = build_snapshot(
+        output_path=default_snapshot_path(output_dir, label),
+        version=label,
+        database=database,
+        marts_dir=marts_dir,
+        manifest=manifest,
+    )
+    console.print(f"[green]Wrote snapshot:[/] {result.path}")
+    console.print(f"[green]Members:[/] {len(result.members)}")
+    for member in result.members:
+        console.print(f"  - {member}")

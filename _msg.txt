@@ -1,0 +1,20 @@
+Add v0.5 production-style local analytics
+
+Wrap the lab in production tooling:
+
+- dbt-duckdb project (transform/): staging views + marts models that rebuild
+  the same marts as the Python pipeline, with not_null tests. Pinned to stable
+  dbt-core (avoids the 2.0 prerelease). Runs in CI after sample-data.
+- Evidence.dev dashboard (dashboard/): a BI site over the DuckDB marts (KPIs,
+  bar/scatter/line charts, table). Trimmed to the DuckDB connector and pinned
+  typescript to ^5 so installs resolve cleanly. Built in its own CI workflow so
+  the heavy Node build never gates the Python CI.
+- Snapshot packaging (packaging/snapshot.py + `carbon-duckdb snapshot`):
+  bundles the database, Parquet marts, and manifest into a versioned zip.
+- Scheduled data-refresh workflow: weekly cron + manual dispatch that downloads
+  live OWID data, rebuilds, and uploads the snapshot + reports as artifacts
+  (no commits or releases).
+
+Bump version to 0.5.0. Add docs/production.md, Makefile targets (dbt, snapshot,
+dashboard), ROADMAP check-offs, and 4 snapshot tests. ruff, mypy --strict,
+pytest, nbmake and dbt build all green.

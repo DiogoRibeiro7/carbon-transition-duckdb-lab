@@ -32,3 +32,7 @@ jobs:
         run: poetry run python -m ipykernel install --user --name ci-kernel
       - name: Execute notebooks
         run: poetry run pytest --nbmake notebooks --nbmake-kernel=ci-kernel
+      - name: Build dbt models
+        run: |
+          poetry run carbon-duckdb sample-data --output-dir data/raw
+          poetry run dbt build --project-dir transform --profiles-dir transform

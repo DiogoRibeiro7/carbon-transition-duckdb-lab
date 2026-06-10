@@ -1,0 +1,8 @@
+carbon_transition:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      # Resolved relative to the invocation directory (the repo root).
+      path: "data/processed/dbt_carbon_transition.duckdb"
+      threads: 4
