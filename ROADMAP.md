@@ -50,3 +50,10 @@
 - [x] Configurable scoring profiles loaded from a config file
 - [x] Country benchmarking report (percentile, gap to peer median and leader)
 - [x] CLI: `benchmark` command and `--group` / `--profile` scoring options
+
+## v0.7 — Uncertainty-aware scoring
+
+- [x] Monte Carlo confidence bands for transition-risk scores
+- [x] Rank-stability analysis under weight perturbation
+- [x] Probability of being in the top-k and uncertain-rank flags
+- [x] CLI: `uncertainty` command

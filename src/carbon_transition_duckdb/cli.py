@@ -30,6 +30,7 @@ from carbon_transition_duckdb.pipeline import (
     compute_transition_scores,
     load_transition_mart,
 )
+from carbon_transition_duckdb.quality.country_groups import filter_by_group
 from carbon_transition_duckdb.quality.manifest import verify_manifest, write_manifest
 from carbon_transition_duckdb.quality.missingness import (
     missingness_by_metric,
@@ -40,6 +41,7 @@ from carbon_transition_duckdb.reporting.markdown import write_report
 from carbon_transition_duckdb.risk.profiles import get_profile
 from carbon_transition_duckdb.risk.scoring import filter_entities
 from carbon_transition_duckdb.sample_data import generate_synthetic_owid_data
+from carbon_transition_duckdb.uncertainty import uncertainty_summary
 from carbon_transition_duckdb.version import __version__
 from carbon_transition_duckdb.visualization.plots import plot_top_scores
 
@@ -422,6 +424,53 @@ def benchmark(
 
     label = group or "all countries"
     _print_frame(frame, f"Benchmark: {label}")
+
+    if output is not None:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        frame.to_csv(output, index=False)
+        console.print(f"[green]Wrote:[/] {output}")
+
+
+@app.command("uncertainty")
+def uncertainty(
+    database: Path = typer.Option(
+        Path("data/processed/carbon_transition.duckdb"),
+        help="Path to DuckDB database.",
+    ),
+    group: str | None = typer.Option(
+        None, help="Peer group to score within (e.g. 'eu', 'oecd')."
+    ),
+    profile: str | None = typer.Option(
+        None, help="Scoring profile: a built-in name or a YAML/JSON file path."
+    ),
+    samples: int = typer.Option(500, help="Number of Monte Carlo weight samples."),
+    top_k: int = typer.Option(3, help="Top-k cutoff for the top-k probability."),
+    seed: int = typer.Option(42, help="Random seed for reproducibility."),
+    year: int | None = typer.Option(
+        None, help="Year to analyse (defaults to the latest available)."
+    ),
+    output: Path | None = typer.Option(None, help="Optional CSV output path."),
+    include_aggregates: bool = typer.Option(
+        False, help="Include aggregate entities such as World or Europe."
+    ),
+) -> None:
+    """Monte Carlo score confidence bands and rank stability under weight jitter."""
+    mart = load_transition_mart(database)
+    if not include_aggregates:
+        mart = filter_entities(mart)
+    if group is not None:
+        mart = filter_by_group(mart, group)
+
+    weights = get_profile(profile).weights if profile else None
+    frame = uncertainty_summary(
+        mart,
+        weights=weights,
+        n_samples=samples,
+        seed=seed,
+        year=year,
+        top_k=top_k,
+    )
+    _print_frame(frame, f"Score uncertainty ({samples} samples)")
 
     if output is not None:
         output.parent.mkdir(parents=True, exist_ok=True)

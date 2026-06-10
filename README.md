@@ -68,6 +68,7 @@ carbon-transition-duckdb-lab/
 │   ├── decomposition/
 │   ├── forecasting/
 │   ├── benchmark/
+│   ├── uncertainty/
 │   ├── packaging/
 │   ├── reporting/
 │   ├── visualization/
@@ -85,7 +86,8 @@ carbon-transition-duckdb-lab/
 │   ├── 05_data_quality.ipynb
 │   ├── 06_decomposition_attribution.ipynb
 │   ├── 07_forecasting_scenarios.ipynb
-│   └── 08_benchmarking.ipynb
+│   ├── 08_benchmarking.ipynb
+│   └── 09_uncertainty.ipynb
 ├── tests/
 └── reports/
 ```
@@ -237,6 +239,19 @@ Profiles are validated YAML/JSON weightings (see `profiles/`); peer groups are
 ISO3-based (`eu`, `oecd`, income tiers). Details in
 [docs/benchmarking.md](docs/benchmarking.md).
 
+## Uncertainty-aware scoring (v0.7)
+
+Replace a single score with an honest confidence band by perturbing the weights
+(Monte Carlo) and measuring how much each country's score and rank move:
+
+```bash
+poetry run carbon-duckdb uncertainty --samples 500 --top-k 3
+```
+
+The report gives a 5th-95th percentile score band, the rank range, the
+probability of being in the top-k highest risk, and an uncertain-rank flag. See
+[docs/uncertainty.md](docs/uncertainty.md).
+
 ## Main metrics
 
 The first version computes a transparent score from:
@@ -284,6 +299,7 @@ lakehouse on demand, so they can be run in any order.
 | `06_decomposition_attribution.ipynb` | Decomposition & attribution (v0.3): Kaya identity (LMDI), emissions-intensity decomposition, and fossil lock-in / electricity-mix indicators. |
 | `07_forecasting_scenarios.ipynb` | Forecasting & scenarios (v0.4): OLS trend forecasts with prediction intervals, constant-rate scenario comparison, and policy target-gap analysis. |
 | `08_benchmarking.ipynb` | Benchmarking & configurable scoring (v0.6): scoring profiles, peer-group-relative scoring, and a rank/percentile/gap benchmark report. |
+| `09_uncertainty.ipynb` | Uncertainty-aware scoring (v0.7): Monte Carlo score confidence bands, rank stability, and top-k probabilities under weight perturbation. |
 
 Run them from the project environment, for example:
 
