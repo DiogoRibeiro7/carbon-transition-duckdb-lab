@@ -1,5 +1,10 @@
 # Carbon Transition DuckDB Lab
 
+[![CI](https://github.com/DiogoRibeiro7/carbon-transition-duckdb-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/DiogoRibeiro7/carbon-transition-duckdb-lab/actions/workflows/ci.yml)
+[![Dashboard](https://github.com/DiogoRibeiro7/carbon-transition-duckdb-lab/actions/workflows/dashboard.yml/badge.svg)](https://github.com/DiogoRibeiro7/carbon-transition-duckdb-lab/actions/workflows/dashboard.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](pyproject.toml)
+
 A local analytical lakehouse for climate and energy-transition analysis.
 
 The project downloads public climate and energy datasets, stores the raw files locally,

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "carbon-transition-duckdb-lab"
-version = "0.5.0"
+version = "0.7.0"
 description = "Local DuckDB lakehouse for climate and energy-transition analytics."
 authors = ["Diogo Ribeiro <diogo_dj@hotmail.com>"]
 readme = "README.md"
