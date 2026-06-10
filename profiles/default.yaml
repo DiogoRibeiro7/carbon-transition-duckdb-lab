@@ -1,0 +1,8 @@
+name: default
+description: Balanced v0.1 weights. Components must sum to 1.
+weights:
+  co2_trend: 0.30
+  co2_per_capita: 0.20
+  carbon_intensity: 0.20
+  fossil_share: 0.20
+  renewable_gap: 0.10

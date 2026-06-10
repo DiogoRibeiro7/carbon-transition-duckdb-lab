@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -14,12 +15,14 @@ from carbon_transition_duckdb.database.duckdb_engine import (
     execute_sql_file,
     table_to_frame,
 )
+from carbon_transition_duckdb.quality.country_groups import filter_by_group
 from carbon_transition_duckdb.quality.manifest import write_manifest
 from carbon_transition_duckdb.quality.schema import (
     assert_no_drift,
     validate_connection_schemas,
 )
 from carbon_transition_duckdb.risk.scoring import (
+    ScoreWeights,
     add_driver_text,
     filter_entities,
     score_transition_risk,
@@ -126,11 +129,31 @@ def load_transition_mart(database: Path) -> pd.DataFrame:
 
 
 def compute_transition_scores(
-    database: Path, exclude_aggregates: bool = True
+    database: Path,
+    exclude_aggregates: bool = True,
+    weights: ScoreWeights | None = None,
+    group: str | Iterable[str] | None = None,
 ) -> pd.DataFrame:
-    """Compute transition-risk scores from the DuckDB mart."""
+    """Compute transition-risk scores from the DuckDB mart.
+
+    Parameters
+    ----------
+    database:
+        Path to the DuckDB database.
+    exclude_aggregates:
+        Drop aggregate entities (World, Europe, …) before scoring.
+    weights:
+        Optional scoring weights (e.g. from a profile). Defaults to the balanced
+        :class:`ScoreWeights`.
+    group:
+        Optional peer group (name such as ``"eu"`` / ``"oecd"`` or an iterable of
+        ISO3 codes). When given, components are min-max scaled *within* the group
+        so scores are relative to comparable economies.
+    """
     mart = load_transition_mart(database)
     if exclude_aggregates:
         mart = filter_entities(mart)
-    scores = score_transition_risk(mart)
+    if group is not None:
+        mart = filter_by_group(mart, group)
+    scores = score_transition_risk(mart, weights=weights)
     return add_driver_text(scores)

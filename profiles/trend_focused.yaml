@@ -1,0 +1,8 @@
+name: trend_focused
+description: Emphasise recent emissions trend and fossil dependence.
+weights:
+  co2_trend: 0.40
+  co2_per_capita: 0.15
+  carbon_intensity: 0.15
+  fossil_share: 0.20
+  renewable_gap: 0.10

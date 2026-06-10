@@ -43,3 +43,10 @@
 - [x] Evidence.dev or Quarto dashboard
 - [x] Scheduled GitHub Actions data refresh
 - [x] Release packaged DuckDB snapshots
+
+## v0.6 — Benchmarking and configurable scoring
+
+- [x] Peer-group-relative transition scoring (EU, OECD, income groups)
+- [x] Configurable scoring profiles loaded from a config file
+- [x] Country benchmarking report (percentile, gap to peer median and leader)
+- [x] CLI: `benchmark` command and `--group` / `--profile` scoring options

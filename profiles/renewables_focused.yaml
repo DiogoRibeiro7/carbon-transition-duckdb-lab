@@ -1,0 +1,8 @@
+name: renewables_focused
+description: Emphasise the renewable electricity gap and fossil share.
+weights:
+  co2_trend: 0.20
+  co2_per_capita: 0.15
+  carbon_intensity: 0.15
+  fossil_share: 0.20
+  renewable_gap: 0.30

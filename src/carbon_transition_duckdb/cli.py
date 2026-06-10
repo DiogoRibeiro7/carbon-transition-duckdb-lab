@@ -10,6 +10,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from carbon_transition_duckdb.benchmark import benchmark_group
 from carbon_transition_duckdb.config import ProjectPaths
 from carbon_transition_duckdb.database.duckdb_engine import connect
 from carbon_transition_duckdb.decomposition import (
@@ -36,6 +37,7 @@ from carbon_transition_duckdb.quality.missingness import (
 )
 from carbon_transition_duckdb.quality.schema import validate_connection_schemas
 from carbon_transition_duckdb.reporting.markdown import write_report
+from carbon_transition_duckdb.risk.profiles import get_profile
 from carbon_transition_duckdb.risk.scoring import filter_entities
 from carbon_transition_duckdb.sample_data import generate_synthetic_owid_data
 from carbon_transition_duckdb.version import __version__
@@ -119,9 +121,21 @@ def score(
         False,
         help="Include aggregate entities such as World or Europe.",
     ),
+    group: str | None = typer.Option(
+        None, help="Peer group to score within (e.g. 'eu', 'oecd', an income tier)."
+    ),
+    profile: str | None = typer.Option(
+        None, help="Scoring profile: a built-in name or a YAML/JSON file path."
+    ),
 ) -> None:
     """Compute transition-risk scores from the DuckDB mart."""
-    scores = compute_transition_scores(database=database, exclude_aggregates=not include_aggregates)
+    weights = get_profile(profile).weights if profile else None
+    scores = compute_transition_scores(
+        database=database,
+        exclude_aggregates=not include_aggregates,
+        weights=weights,
+        group=group,
+    )
     output.parent.mkdir(parents=True, exist_ok=True)
     scores.to_csv(output, index=False)
     console.print(f"[green]Wrote scores:[/] {output}")
@@ -376,3 +390,40 @@ def snapshot(
     console.print(f"[green]Members:[/] {len(result.members)}")
     for member in result.members:
         console.print(f"  - {member}")
+
+
+@app.command("benchmark")
+def benchmark(
+    database: Path = typer.Option(
+        Path("data/processed/carbon_transition.duckdb"),
+        help="Path to DuckDB database.",
+    ),
+    group: str | None = typer.Option(
+        None, help="Peer group to benchmark within (e.g. 'eu', 'oecd')."
+    ),
+    profile: str | None = typer.Option(
+        None, help="Scoring profile: a built-in name or a YAML/JSON file path."
+    ),
+    year: int | None = typer.Option(
+        None, help="Year to benchmark (defaults to the latest available)."
+    ),
+    output: Path | None = typer.Option(None, help="Optional CSV output path."),
+    include_aggregates: bool = typer.Option(
+        False, help="Include aggregate entities such as World or Europe."
+    ),
+) -> None:
+    """Benchmark a peer group: rank, percentile, and gaps to median and leader."""
+    mart = load_transition_mart(database)
+    if not include_aggregates:
+        mart = filter_entities(mart)
+
+    weights = get_profile(profile).weights if profile else None
+    frame = benchmark_group(mart, group=group, weights=weights, year=year)
+
+    label = group or "all countries"
+    _print_frame(frame, f"Benchmark: {label}")
+
+    if output is not None:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        frame.to_csv(output, index=False)
+        console.print(f"[green]Wrote:[/] {output}")

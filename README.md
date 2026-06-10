@@ -67,6 +67,7 @@ carbon-transition-duckdb-lab/
 │   ├── quality/
 │   ├── decomposition/
 │   ├── forecasting/
+│   ├── benchmark/
 │   ├── packaging/
 │   ├── reporting/
 │   ├── visualization/
@@ -75,6 +76,7 @@ carbon-transition-duckdb-lab/
 │   └── cli.py
 ├── transform/            # dbt-duckdb project (staging + marts)
 ├── dashboard/            # Evidence.dev BI dashboard
+├── profiles/             # scoring weight profiles (YAML)
 ├── notebooks/
 │   ├── 01_duckdb_transition_workflow.ipynb
 │   ├── 02_score_anatomy_and_sensitivity.ipynb
@@ -82,7 +84,8 @@ carbon-transition-duckdb-lab/
 │   ├── 04_duckdb_sql_analytics.ipynb
 │   ├── 05_data_quality.ipynb
 │   ├── 06_decomposition_attribution.ipynb
-│   └── 07_forecasting_scenarios.ipynb
+│   ├── 07_forecasting_scenarios.ipynb
+│   └── 08_benchmarking.ipynb
 ├── tests/
 └── reports/
 ```
@@ -217,6 +220,23 @@ target gaps) are documented in [docs/forecasting.md](docs/forecasting.md).
 
 Full details in [docs/production.md](docs/production.md).
 
+## Benchmarking & configurable scoring (v0.6)
+
+Score countries *within* a peer group with a chosen weighting profile, and
+benchmark them against their peers:
+
+```bash
+# Score within the EU using a built-in profile
+poetry run carbon-duckdb score --group eu --profile trend_focused
+
+# Benchmark a peer group (rank, percentile, gap to median and leader)
+poetry run carbon-duckdb benchmark --group oecd --profile profiles/renewables_focused.yaml
+```
+
+Profiles are validated YAML/JSON weightings (see `profiles/`); peer groups are
+ISO3-based (`eu`, `oecd`, income tiers). Details in
+[docs/benchmarking.md](docs/benchmarking.md).
+
 ## Main metrics
 
 The first version computes a transparent score from:
@@ -263,6 +283,7 @@ lakehouse on demand, so they can be run in any order.
 | `05_data_quality.ipynb` | Data-quality toolkit (v0.2): schema-drift validation, ingestion metadata, checksum manifests, missingness reports, country normalization, and group filters. |
 | `06_decomposition_attribution.ipynb` | Decomposition & attribution (v0.3): Kaya identity (LMDI), emissions-intensity decomposition, and fossil lock-in / electricity-mix indicators. |
 | `07_forecasting_scenarios.ipynb` | Forecasting & scenarios (v0.4): OLS trend forecasts with prediction intervals, constant-rate scenario comparison, and policy target-gap analysis. |
+| `08_benchmarking.ipynb` | Benchmarking & configurable scoring (v0.6): scoring profiles, peer-group-relative scoring, and a rank/percentile/gap benchmark report. |
 
 Run them from the project environment, for example:
 
