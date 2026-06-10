@@ -16,6 +16,10 @@ reports/**/*.png
 .DS_Store
 .env
 
+# Scratch / scratch authoring files at the repo root
+/_*.py
+/_*.txt
+
 # Build/snapshot artifacts and dbt run output
 dist/
 transform/target/
